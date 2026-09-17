@@ -1,0 +1,13 @@
+curl --request GET \
+	--url 'https://irctc1.p.rapidapi.com/api/v3/getPNRStatus?pnrNumber=8153475332' \
+	--header 'Content-Type: application/json' \
+	--header 'x-rapidapi-host: irctc1.p.rapidapi.com' \
+	--header 'x-rapidapi-key: a42f801a0emshb1aaf9667f85ee4p115e50jsn88dbcccb42bf'
+
+
+
+
+
+https://api.telegram.org/bot8990601495:AAE7Hi4gGdZRmdrB0wDM1985p2tJAiJ7AiQ/getUpdates
+    
+Chat ID: 8559977485

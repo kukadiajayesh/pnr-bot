@@ -1,0 +1,34 @@
+name: PNR Watch
+
+on:
+  schedule:
+    - cron: "0 */2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install requests
+
+      - env:
+          RAPID_KEY: ${{ secrets.RAPID_KEY }}
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          CHAT_ID: ${{ vars.CHAT_ID }}
+          PNR_LIST: ${{ vars.PNR_LIST }}
+        run: python check_pnr.py
+
+      - run: |
+          git config user.name pnr-bot
+          git config user.email bot@users.noreply.github.com
+          git add state.json
+          git diff --staged --quiet || (git commit -m "state" && git push)
