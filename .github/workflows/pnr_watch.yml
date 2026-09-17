@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "0 */2 * * *"
   workflow_dispatch:
+    inputs:
+      pnr:
+        description: "PNR number(s) to check (comma-separated, optional)"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -24,7 +29,7 @@ jobs:
           RAILRADAR_API_KEY: ${{ secrets.RAILRADAR_API_KEY || vars.RAILRADAR_API_KEY || secrets.RAPID_KEY || vars.RAPID_KEY }}
           TG_TOKEN: ${{ secrets.TG_TOKEN || vars.TG_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID || vars.CHAT_ID }}
-          PNR: ${{ secrets.PNR || vars.PNR || secrets.PNR_LIST || vars.PNR_LIST }}
+          PNR: ${{ inputs.pnr || secrets.PNR || vars.PNR || secrets.PNR_LIST || vars.PNR_LIST }}
         run: python check_pnr.py
 
       - run: |
