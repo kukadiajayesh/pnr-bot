@@ -2,7 +2,7 @@
 
 An automated Indian Railways (IRCTC) PNR status monitor and Telegram notification bot.
 
-It tracks multiple PNR numbers, fetches live passenger booking/current status, confirmation predictions, and chart preparation status using the [RailRadar API](https://api.railradar.in). When changes are detected, it dispatches instant alerts to a designated Telegram chat.
+It tracks your 10-digit PNR number, fetches live passenger booking/current status, confirmation predictions, and chart preparation status using the [RailRadar API](https://api.railradar.in). When changes are detected, it dispatches instant alerts to a designated Telegram chat.
 
 Runs locally or entirely automated in the cloud via GitHub Actions.
 
@@ -10,7 +10,7 @@ Runs locally or entirely automated in the cloud via GitHub Actions.
 
 ## ✨ Features
 
-- **Multi-PNR Tracking**: Monitor multiple 10-digit PNRs simultaneously via a comma-separated list.
+- **PNR Tracking**: Monitor your 10-digit PNR status seamlessly.
 - **Smart Change Detection**: Compares current passenger statuses and confirmation predictions with `state.json`. Alerts are sent only when there is an actual status change or confirmation prediction update.
 - **Confirmation Probability**: Fetches RailRadar confirmation prediction percentage and probability assessment for waitlisted tickets.
 - **Charting Status**: Monitors whether the reservation chart has been prepared.
@@ -38,13 +38,13 @@ Configure these variables locally in a `.env` file or as GitHub Repository Secre
 
 | Variable | Required | Description | Example |
 | :--- | :--- | :--- | :--- |
-| `PNR_LIST` | **Yes** | Comma-separated list of 10-digit PNR numbers | `1234567890,9876543210` |
+| `PNR` | **Yes** | 10-digit PNR number | `1234567890` |
 | `TG_TOKEN` | **Yes** | Telegram Bot API token from [@BotFather](https://t.me/BotFather) | `123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ` |
 | `CHAT_ID` | **Yes** | Telegram Chat or Group ID to receive alerts | `12345678` or `-100123456789` |
 | `RAILRADAR_API_KEY` | **Yes** | RailRadar API Bearer Token from [api.railradar.in](https://api.railradar.in) | `your_railradar_api_key` |
 
 > [!NOTE]
-> `RAPID_KEY` is also accepted as a fallback if `RAILRADAR_API_KEY` is not set.
+> `RAPID_KEY` is also accepted as a fallback if `RAILRADAR_API_KEY` is not set. `PNR_LIST` is also accepted as a fallback for `PNR`.
 
 ---
 
@@ -70,7 +70,7 @@ cp .env.example .env
 ```
 Edit `.env`:
 ```env
-PNR_LIST=1234567890,9876543210
+PNR=1234567890
 TG_TOKEN=your_telegram_bot_token_here
 CHAT_ID=your_chat_id_here
 RAILRADAR_API_KEY=your_railradar_api_key_here
@@ -95,7 +95,7 @@ The repository includes a ready-to-use GitHub Actions workflow in [`.github/work
 1. Fork or push this repository to GitHub.
 2. Go to **Settings** > **Secrets and variables** > **Actions**.
 3. Under **Repository secrets** (or **Variables**), add:
-   - `PNR_LIST`
+   - `PNR`
    - `TG_TOKEN`
    - `CHAT_ID`
    - `RAILRADAR_API_KEY`
