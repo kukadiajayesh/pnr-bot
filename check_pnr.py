@@ -50,8 +50,8 @@ for pnr in PNRS:
             "TrainName": "MUMBAI RAJDHANI",
             "Doj": "25-10-2026",
             "PassengerStatus": [
-                {"Passenger": 1, "CurrentStatus": "CNF / B1 / 21"},
-                {"Passenger": 2, "CurrentStatus": "CNF / B1 / 22"},
+                {"Passenger": 1, "CurrentStatus": "CNF / B1 / 25"},
+                {"Passenger": 2, "CurrentStatus": "CNF / B1 / 26"},
             ],
         },
     }
