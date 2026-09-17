@@ -15,8 +15,8 @@ CHAT = os.environ.get("CHAT_ID", "")
 RAPID_KEY = os.environ.get("RAPID_KEY", "")
 STATE_FILE = "state.json"
 
-if not TG or not CHAT or not RAPID_KEY or not PNRS:
-    print("Error: Missing required environment variables (PNR_LIST, TG_TOKEN, CHAT_ID, RAPID_KEY).")
+if not TG or not CHAT or not PNRS:
+    print("Error: Missing required environment variables (PNR_LIST, TG_TOKEN, CHAT_ID).")
     exit(1)
 
 state = json.load(open(STATE_FILE)) if os.path.exists(STATE_FILE) else {}
@@ -32,37 +32,28 @@ def notify(text):
         )
         if r.status_code != 200:
             print(f"Telegram API error {r.status_code}: {r.text}")
+        else:
+            print(f"Telegram message sent successfully (status 200).")
     except Exception as e:
         print(f"Failed to send Telegram notification: {e}")
 
 for pnr in PNRS:
     print(f"Checking PNR: {pnr}...")
-    try:
-        r = requests.get(
-            "https://irctc1.p.rapidapi.com/api/v3/getPNRStatus",
-            params={"pnrNumber": pnr},
-            headers={
-                "X-RapidAPI-Key": RAPID_KEY,
-                "X-RapidAPI-Host": "irctc1.p.rapidapi.com",
-            },
-            timeout=30,
-        )
-    except Exception as e:
-        print(f"Request failed for PNR {pnr}: {e}")
-        notify(f"PNR {pnr}: Request exception: {e}")
-        continue
-
-    if r.status_code != 200:
-        print(f"API HTTP error {r.status_code} for PNR {pnr}: {r.text}")
-        notify(f"PNR {pnr}: API error {r.status_code}")
-        continue
-
-    res_json = r.json()
-    if not res_json.get("status"):
-        msg = res_json.get("message", "API returned failure")
-        print(f"PNR {pnr}: API returned status false - {msg}")
-        notify(f"PNR {pnr}: API error: {msg}")
-        continue
+    # Dummy IRCTC response for testing Telegram sendMessage feature
+    res_json = {
+        "status": True,
+        "message": "Success",
+        "data": {
+            "Pnr": pnr,
+            "TrainNo": "12951",
+            "TrainName": "MUMBAI RAJDHANI",
+            "Doj": "25-10-2026",
+            "PassengerStatus": [
+                {"Passenger": 1, "CurrentStatus": "CNF / B1 / 21"},
+                {"Passenger": 2, "CurrentStatus": "CNF / B1 / 22"},
+            ],
+        },
+    }
 
     d = res_json.get("data") or {}
     passenger_list = d.get("PassengerStatus") or d.get("passengerList") or []
