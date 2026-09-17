@@ -15,8 +15,9 @@ CHAT = os.environ.get("CHAT_ID", "")
 RAPID_KEY = os.environ.get("RAPID_KEY", "")
 STATE_FILE = "state.json"
 
-if not TG or not CHAT or not PNRS:
-    print("Error: Missing required environment variables (PNR_LIST, TG_TOKEN, CHAT_ID).")
+missing = [name for name, val in [("PNR_LIST", PNRS), ("TG_TOKEN", TG), ("CHAT_ID", CHAT)] if not val]
+if missing:
+    print(f"Error: Missing required environment variables: {', '.join(missing)}")
     exit(1)
 
 state = json.load(open(STATE_FILE)) if os.path.exists(STATE_FILE) else {}
