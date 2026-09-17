@@ -12,10 +12,10 @@ if os.path.exists(".env"):
 PNRS = [p.strip() for p in os.environ.get("PNR_LIST", "").split(",") if p.strip()]
 TG = os.environ.get("TG_TOKEN", "")
 CHAT = os.environ.get("CHAT_ID", "")
-RAPID_KEY = os.environ.get("RAPID_KEY", "")
+API_KEY = os.environ.get("RAILRADAR_API_KEY") or os.environ.get("RAPID_KEY", "")
 STATE_FILE = "state.json"
 
-missing = [name for name, val in [("PNR_LIST", PNRS), ("TG_TOKEN", TG), ("CHAT_ID", CHAT), ("RAPID_KEY", RAPID_KEY)] if not val]
+missing = [name for name, val in [("PNR_LIST", PNRS), ("TG_TOKEN", TG), ("CHAT_ID", CHAT), ("RAILRADAR_API_KEY", API_KEY)] if not val]
 if missing:
     print(f"Error: Missing required environment variables: {', '.join(missing)}")
     exit(1)
@@ -42,12 +42,8 @@ for pnr in PNRS:
     print(f"Checking PNR: {pnr}...")
     try:
         r = requests.get(
-            "https://irctc1.p.rapidapi.com/api/v3/getPNRStatus",
-            params={"pnrNumber": pnr},
-            headers={
-                "X-RapidAPI-Key": RAPID_KEY,
-                "X-RapidAPI-Host": "irctc1.p.rapidapi.com",
-            },
+            f"https://api.railradar.in/v1/pnr/{pnr}",
+            headers={"Authorization": f"Bearer {API_KEY}"},
             timeout=30,
         )
     except Exception as e:
@@ -61,29 +57,47 @@ for pnr in PNRS:
         continue
 
     res_json = r.json()
-    if not res_json.get("status"):
-        msg = res_json.get("message", "API returned failure")
-        print(f"PNR {pnr}: API returned status false - {msg}")
+    if not res_json.get("success") and not res_json.get("status"):
+        error_info = res_json.get("error")
+        if isinstance(error_info, dict):
+            msg = error_info.get("message") or error_info.get("code") or "API returned failure"
+        else:
+            msg = res_json.get("message", "API returned failure")
+        print(f"PNR {pnr}: API returned failure - {msg}")
         notify(f"PNR {pnr}: API error: {msg}")
         continue
 
     d = res_json.get("data") or {}
-    passenger_list = d.get("PassengerStatus") or d.get("passengerList") or []
-    now = [
-        p.get("CurrentStatus") or p.get("current_status") or "?"
-        for p in passenger_list
-    ]
+    passenger_list = d.get("passengers") or d.get("PassengerStatus") or d.get("passengerList") or []
+    now = []
+    for p in passenger_list:
+        curr = p.get("current")
+        if isinstance(curr, dict):
+            status_str = curr.get("formatted") or curr.get("status") or "?"
+        elif curr:
+            status_str = str(curr)
+        else:
+            status_str = p.get("CurrentStatus") or p.get("current_status") or "?"
+        now.append(status_str)
 
-    train_name = d.get("TrainName") or d.get("trainName", "")
-    train_number = d.get("TrainNo") or d.get("trainNumber", "")
-    doj = d.get("Doj") or d.get("dateOfJourney", "")
+    train = d.get("train") if isinstance(d.get("train"), dict) else {}
+    train_name = train.get("name") or d.get("TrainName") or d.get("trainName", "")
+    train_number = train.get("number") or d.get("TrainNo") or d.get("trainNumber", "")
+    doj = train.get("journeyDate") or d.get("Doj") or d.get("dateOfJourney", "")
+    charting = d.get("charting") if isinstance(d.get("charting"), dict) else {}
+    chart_status = charting.get("status") or ("Chart Prepared" if d.get("ChartPrepared") else "")
 
-    print(f"PNR {pnr} -> {train_name} ({train_number}), DOJ: {doj}, Status: {now}")
+    print(f"PNR {pnr} -> {train_name} ({train_number}), DOJ: {doj}, Chart: {chart_status}, Status: {now}")
 
     if state.get(pnr) != now:
-        notify(f"PNR {pnr} — {train_name} ({train_number})\n"
-               f"{doj}\n" + "\n".join(
-               f"P{i+1}: {s}" for i, s in enumerate(now)))
+        msg_lines = [
+            f"PNR {pnr} — {train_name} ({train_number})",
+            f"DOJ: {doj}",
+        ]
+        if chart_status:
+            msg_lines.append(f"Chart: {chart_status}")
+        msg_lines.extend(f"P{i+1}: {s}" for i, s in enumerate(now))
+        notify("\n".join(msg_lines))
         state[pnr] = now
     else:
         print(f"No change in status for PNR {pnr}.")

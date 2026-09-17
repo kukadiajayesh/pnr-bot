@@ -21,7 +21,7 @@ jobs:
       - run: pip install requests
 
       - env:
-          RAPID_KEY: ${{ secrets.RAPID_KEY || vars.RAPID_KEY }}
+          RAILRADAR_API_KEY: ${{ secrets.RAILRADAR_API_KEY || vars.RAILRADAR_API_KEY || secrets.RAPID_KEY || vars.RAPID_KEY }}
           TG_TOKEN: ${{ secrets.TG_TOKEN || vars.TG_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID || vars.CHAT_ID }}
           PNR_LIST: ${{ secrets.PNR_LIST || vars.PNR_LIST }}
