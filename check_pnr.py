@@ -38,6 +38,35 @@ def notify(text):
     except Exception as e:
         print(f"Failed to send Telegram notification: {e}")
 
+def get_prediction(pnr):
+    try:
+        r = requests.get(
+            f"https://api.railradar.in/v1/pnr/{pnr}/prediction",
+            headers={"Authorization": f"Bearer {API_KEY}"},
+            timeout=15,
+        )
+        if r.status_code == 200:
+            res_json = r.json()
+            if res_json.get("success") or res_json.get("status"):
+                data = res_json.get("data") or {}
+                header = data.get("header")
+                prob = data.get("probability")
+                prob_pct = data.get("probabilityPercent")
+                if prob_pct is None and prob is not None:
+                    prob_pct = round(prob * 100)
+
+                if header and prob_pct is not None and f"{prob_pct}%" not in str(header):
+                    return f"{header} ({prob_pct}%)"
+                if header:
+                    return str(header)
+                if prob_pct is not None:
+                    return f"{prob_pct}% confirmation chance"
+        else:
+            print(f"Prediction API HTTP {r.status_code} for PNR {pnr}: {r.text}")
+    except Exception as e:
+        print(f"Prediction request failed for PNR {pnr}: {e}")
+    return None
+
 for pnr in PNRS:
     print(f"Checking PNR: {pnr}...")
     try:
@@ -87,18 +116,51 @@ for pnr in PNRS:
     charting = d.get("charting") if isinstance(d.get("charting"), dict) else {}
     chart_status = charting.get("status") or ("Chart Prepared" if d.get("ChartPrepared") else "")
 
-    print(f"PNR {pnr} -> {train_name} ({train_number}), DOJ: {doj}, Chart: {chart_status}, Status: {now}")
+    prediction_info = get_prediction(pnr)
 
-    if state.get(pnr) != now:
+    prev = state.get(pnr)
+    prev_status = None
+    prev_pred = None
+    if isinstance(prev, list):
+        prev_status = prev
+    elif isinstance(prev, dict):
+        prev_status = prev.get("passengers", [])
+        prev_pred = prev.get("prediction")
+
+    # If prediction call failed temporarily, retain previous prediction
+    if prediction_info is None and prev_pred is not None:
+        prediction_info = prev_pred
+
+    has_changed = False
+    if prev is None:
+        has_changed = True
+    elif isinstance(prev, list):
+        # Migrating from legacy list format or status changed
+        has_changed = True
+    elif prev_status != now:
+        has_changed = True
+    elif prediction_info is not None and prev_pred != prediction_info:
+        has_changed = True
+
+    pred_log = f", Prediction: {prediction_info}" if prediction_info else ""
+    chart_log = f", Chart: {chart_status}" if chart_status else ""
+    print(f"PNR {pnr} -> {train_name} ({train_number}), DOJ: {doj}{chart_log}{pred_log}, Status: {now}")
+
+    if has_changed:
         msg_lines = [
             f"PNR {pnr} — {train_name} ({train_number})",
             f"DOJ: {doj}",
         ]
         if chart_status:
             msg_lines.append(f"Chart: {chart_status}")
+        if prediction_info:
+            msg_lines.append(f"Prediction: {prediction_info}")
         msg_lines.extend(f"P{i+1}: {s}" for i, s in enumerate(now))
         notify("\n".join(msg_lines))
-        state[pnr] = now
+        state[pnr] = {
+            "passengers": now,
+            "prediction": prediction_info,
+        }
     else:
         print(f"No change in status for PNR {pnr}.")
 
