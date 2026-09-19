@@ -1,12 +1,16 @@
 {
   "8153475332": {
     "passengers": [
+      "RAC/62",
+      "RAC/63",
       "RAC/64",
       "RAC/65",
-      "RAC/66",
-      "RAC/67",
       "NOSB"
     ],
-    "prediction": "RAC - Guaranteed Boarding (95%)"
+    "prediction": "RAC - Guaranteed Boarding (95%)",
+    "train_name": "Jabalpur Express",
+    "train_number": "11465",
+    "doj": "2026-10-31",
+    "chart_status": "Chart Not Prepared"
   }
 }
