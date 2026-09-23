@@ -1,10 +1,10 @@
 {
   "8153475332": {
     "passengers": [
+      "RAC/60",
+      "RAC/61",
       "RAC/62",
       "RAC/63",
-      "RAC/64",
-      "RAC/65",
       "NOSB"
     ],
     "prediction": "RAC - Guaranteed Boarding (95%)",
